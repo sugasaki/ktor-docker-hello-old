@@ -13,7 +13,7 @@ fun main(args: Array<String>) {
     embeddedServer(Netty, port.toInt()) {
         routing {
             get("/") {
-                call.respondText("Hello Kotlin $target!", ContentType.Text.Html)
+                call.respondText("Hello Kotlin Deploy 1 $target!", ContentType.Text.Html)
             }
         }
     }.start(wait = true)
