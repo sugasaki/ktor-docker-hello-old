@@ -1,15 +1,22 @@
-FROM openjdk:8-jre-alpine
+# Use the official gradle image to create a build artifact.
+# https://hub.docker.com/_/gradle
+FROM gradle:4.10 as builder
 
-ENV APPLICATION_USER ktor
-RUN adduser -D -g '' $APPLICATION_USER
+# Copy local code to the container image.
+COPY build.gradle .
+COPY src ./src
 
-RUN mkdir /app
-RUN chown -R $APPLICATION_USER /app
+# Build a release artifact.
+RUN gradle clean build --no-daemon
 
-USER $APPLICATION_USER
+# Use AdoptOpenJDK for base image.
+# It's important to use OpenJDK 8u191 or above that has container support enabled.
+# https://hub.docker.com/r/adoptopenjdk/openjdk8
+# https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
+FROM adoptopenjdk/openjdk8:jdk8u202-b08-alpine-slim
 
-# COPY ./build/libs/my-application.jar /app/my-application.jar
-COPY ./build/libs/my-application.jar /app/my-application.jar
-WORKDIR /app
+# Copy the jar to the production image from the builder stage.
+COPY --from=builder /home/gradle/build/libs/gradle.jar /helloworld.jar
 
-CMD ["java", "-server", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-XX:InitialRAMFraction=2", "-XX:MinRAMFraction=2", "-XX:MaxRAMFraction=2", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=100", "-XX:+UseStringDeduplication", "-jar", "my-application.jar"]
+# Run the web service on container startup.
+CMD [ "java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "/helloworld.jar" ]
