@@ -1,22 +1,33 @@
 # Use the official gradle image to create a build artifact.
 # https://hub.docker.com/_/gradle
-FROM gradle:4.10 as builder
+FROM gradle:6.7 as builder
 
 # Copy local code to the container image.
 COPY build.gradle .
 COPY src ./src
 
 # Build a release artifact.
-RUN gradle clean build --no-daemon
+# RUN gradle clean build --no-daemon
+RUN gradle installDist
 
-# Use AdoptOpenJDK for base image.
-# It's important to use OpenJDK 8u191 or above that has container support enabled.
-# https://hub.docker.com/r/adoptopenjdk/openjdk8
+
+# Use the Official OpenJDK image for a lean production stage of our multi-stage build.
+# https://hub.docker.com/_/openjdk
 # https://docs.docker.com/develop/develop-images/multistage-build/#use-multi-stage-builds
-FROM adoptopenjdk/openjdk8:jdk8u202-b08-alpine-slim
+# FROM openjdk:8-jre-alpine
 
 # Copy the jar to the production image from the builder stage.
-COPY --from=builder /home/gradle/build/libs/gradle.jar /helloworld.jar
+# COPY --from=builder /home/gradle/build/libs/gradle.jar /helloworld.jar
+# COPY --from=builder /home/gradle/build/install/gradle /helloworld2
 
 # Run the web service on container startup.
-CMD [ "java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "/helloworld.jar" ]
+# CMD [ "java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "/helloworld.jar" ]
+
+
+FROM openjdk:8-jdk
+EXPOSE 8080:8080
+RUN mkdir /app
+COPY --from=builder /home/gradle/build/install/gradle /app/
+WORKDIR /app/bin
+CMD ["./gradle"]
+
