@@ -6,7 +6,18 @@
 
 
 
-## 0 クリーンアップ
+## up
+
+```
+docker-compose up
+ 
+ or 
+ 
+docker-compose up --build
+```
+
+
+## クリーンアップ
 
 ボリュームも消す時は以下
 
@@ -14,25 +25,9 @@
 docker-compose down --volumes
 ```
 
-```
-./gradlew installDist
-```
-
-## 2. up
-
-```
-docker-compose up
-
-docker-compose up --build
-```
-
-
 ## dockerの中に入るコマンド
 
-
-- logstash
-
 ```
-docker exec -i -t logstash bash
+docker exec -i -t container--ktor-test bash
 ```
 
